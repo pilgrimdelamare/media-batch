@@ -161,8 +161,8 @@ def process(q: Queue, yt, job):
         sh(["ffmpeg", "-v", "error", "-y", "-i", voc, "-b:a", "192k", voc_mp3])
 
         if DRY:
-            log.info("  DRY_RUN: niente upload")
-            vid, yt_title = None, None
+            log.info("  DRY_RUN: video pronto (%d MB), niente upload", Path(mp4).stat().st_size >> 20)
+            return "dry", {"check": chk}
         else:
             log.info("  upload YouTube…")
             vid, yt_title = youtube.upload(yt, mp4, title, artist, thumb)
@@ -208,6 +208,11 @@ def main():
                 q.d.put_json(job, None, None, jid)
                 q._move_job(job, jid, "processing", "pending")
                 continue
+        if dest == "dry":                       # prova: il job torna in coda intatto
+            job["claimed_at"] = 0
+            q.d.put_json(job, None, None, jid)
+            q._move_job(job, jid, "processing", "pending")
+            break
         q.finish(job, jid, dest, **extra)
         log.info("  -> %s %s", dest, extra.get("reason", ""))
         if dest == "done":
