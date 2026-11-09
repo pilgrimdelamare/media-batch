@@ -38,6 +38,13 @@ jobs:
           YT_AUTH: ${{ secrets.YT_AUTH }}
           DRY_RUN: ${{ github.event.inputs.dry || '0' }}
           MAX_UPLOADS: "2"
+      - uses: actions/upload-artifact@v4
+        if: github.event.inputs.dry == '1'
+        with:
+          name: preview
+          path: /tmp/preview.mp4
+          if-no-files-found: ignore
+          retention-days: 3
       - name: keepalive
         if: always()
         run: gh api -X PUT repos/${{ github.repository }}/actions/workflows/run.yml/enable || true

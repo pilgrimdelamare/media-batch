@@ -162,6 +162,7 @@ def process(q: Queue, yt, job):
 
         if DRY:
             log.info("  DRY_RUN: video pronto (%d MB), niente upload", Path(mp4).stat().st_size >> 20)
+            shutil.copy(mp4, "/tmp/preview.mp4")
             return "dry", {"check": chk}
         else:
             log.info("  upload YouTube…")
@@ -180,6 +181,8 @@ def process(q: Queue, yt, job):
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
+    for n in ("httpx", "huggingface_hub", "googleapiclient", "faster_whisper"):
+        logging.getLogger(n).setLevel(logging.WARNING)
     q = Queue()
     q.recover_stale()
     yt = None if DRY else youtube.client()
