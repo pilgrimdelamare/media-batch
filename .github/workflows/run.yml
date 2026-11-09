@@ -1,0 +1,45 @@
+name: run
+on:
+  schedule:
+    - cron: "15 6,12,18 * * *"
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "dry run"
+        default: "0"
+concurrency:
+  group: run
+  cancel-in-progress: false
+permissions:
+  actions: write
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: worker/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch
+          key: models-v1
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
+      - run: pip install -q -r worker/requirements.txt
+      - run: python worker/worker.py
+        env:
+          DRIVE_AUTH: ${{ secrets.DRIVE_AUTH }}
+          YT_AUTH: ${{ secrets.YT_AUTH }}
+          DRY_RUN: ${{ github.event.inputs.dry || '0' }}
+          MAX_UPLOADS: "2"
+      - name: keepalive
+        if: always()
+        run: gh api -X PUT repos/${{ github.repository }}/actions/workflows/run.yml/enable || true
+        env:
+          GH_TOKEN: ${{ github.token }}

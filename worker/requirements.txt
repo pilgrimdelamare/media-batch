@@ -1,0 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1
+torchaudio==2.5.1
+demucs==4.0.1
+faster-whisper==1.1.1
+numpy<2.3
+requests
+google-api-python-client
+google-auth
